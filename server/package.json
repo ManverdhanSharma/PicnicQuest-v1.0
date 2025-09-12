@@ -2,14 +2,18 @@
   "name": "picnicquest-api",
   "version": "1.0.0",
   "description": "Backend API for the PicnicQuest application.",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "mongoose": "^8.4.1"
   },
   "engines": {
     "node": ">=18.0.0"
