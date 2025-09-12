@@ -141,21 +141,20 @@ function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <div
-        className="relative h-[80vh] bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('/images/hero-bg.jpg')`,
-        }}
-      >
-        <div className="absolute inset-0 z-10">
-          <Spline scene="https://prod.spline.design/6PYwuxdpHUYHkqXL/scene.splinecode" />
+      {/* Hero Section with Spline Background */}
+      <div className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+        {/* Spline Background */}
+        <div className="absolute inset-0 z-0">
+          <Spline scene="https://prod.spline.design/J8JoHqfK8uypjVj7/scene.splinecode" />
+          {/* Optional: very light overlay for text contrast */}
+          <div className="absolute inset-0 bg-black/10 pointer-events-none" />
         </div>
-        <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4">
+        {/* Content (text/buttons) */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-bold mb-6 text-white"
+            className="text-5xl md:text-7xl font-bold mb-6 text-white drop-shadow-lg"
           >
             Discover Chennai
           </motion.h1>
@@ -163,7 +162,7 @@ function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl md:text-2xl mb-8 max-w-2xl text-gray-200"
+            className="text-xl md:text-2xl mb-8 max-w-2xl text-gray-200 drop-shadow"
           >
             Experience the perfect blend of tradition and modernity
           </motion.p>

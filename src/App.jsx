@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-
 import Navbar from "@/components/Navbar";
 import Home from "@/components/Home";
 import Spots from "@/components/Spots";
@@ -8,13 +7,12 @@ import Packages from "@/components/Packages";
 import About from "@/components/About";
 import TripPlanner from "@/components/TripPlanner";
 import Events from "@/components/Events";
-import Recommendations from "@/components/Recommendations";
 import { Toaster } from "@/components/ui/toaster";
-
-// These are now in src/
+import Profile from "@/components/Profile";
 import Reviews from "@/Reviews";
 import LoginForm from "@/LoginForm";
 import SignupForm from "@/SignupForm";
+import Book from "@/Book";
 import { AuthProvider, useAuth } from "@/AuthContext";
 
 // Protected route component
@@ -45,7 +43,16 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/events" element={<Events />} />
-              <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/book" element={
+                <ProtectedRoute>
+                  <Book />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/signup" element={<SignupForm />} />
             </Routes>
