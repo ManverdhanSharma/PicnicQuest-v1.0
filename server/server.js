@@ -1,19 +1,25 @@
+require('dotenv').config(); // This must be the very first line
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const app = express();
-const PORT = 3002;
+
+// Use the PORT from environment variables for Render, or 3002 for local development
+const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Connect to MongoDB (database: PicnicQuest)
-mongoose.connect("mongodb://127.0.0.1:27017/PicnicQuest")
-.then(() => console.log("✅ Connected to MongoDB"))
-.catch((err) => console.error("❌ MongoDB connection error:", err));
+// --- Connect to MongoDB using the MONGODB_URI from your .env file ---
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ Successfully connected to MongoDB Atlas"))
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1); // Exit if cannot connect to the database
+  });
 
 // --- User Schema and Model ---
 const userSchema = new mongoose.Schema({
@@ -49,7 +55,8 @@ const bookingSchema = new mongoose.Schema({
   name: { type: String, required: true },
   date: { type: Date, required: true },
   people: { type: Number, required: true },
-  payment: { type: Number, required: true }
+  payment: { type: Number, required: true },
+  username: String // Added username to track who made the booking
 });
 const Booking = mongoose.model("Booking", bookingSchema);
 
@@ -60,8 +67,8 @@ app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ 
-      username, 
+    const newUser = new User({
+      username,
       password: hashedPassword,
       badges: [],
       stats: {
@@ -104,29 +111,19 @@ app.post("/submit-review", async (req, res) => {
     if (!locationName || !nearestLandmark || !reason) {
       return res.status(400).json({ message: "❌ All fields are required!" });
     }
-    
+
     const newReview = new Review({ locationName, nearestLandmark, reason });
     await newReview.save();
-    
+
     // Award badges if username is provided
     if (username) {
       const user = await User.findOne({ username });
       if (user) {
-        // Initialize badges array if it doesn't exist
-        if (!user.badges) user.badges = [];
-        
-        // Initialize stats if they don't exist
-        if (!user.stats) user.stats = {};
-        
-        // Update stats
         user.stats.totalReviews = (user.stats.totalReviews || 0) + 1;
         user.stats.lastActivity = new Date();
-        
-        console.log("Total reviews:", user.stats.totalReviews); // Add logging
-        
+
         // Check for first review badge
         if (user.stats.totalReviews === 1 && !user.badges.some(b => b.name === "First Review")) {
-          console.log("Adding First Review badge"); // Add logging
           user.badges.push({
             name: "First Review",
             description: "Wrote your first review",
@@ -134,12 +131,9 @@ app.post("/submit-review", async (req, res) => {
             earnedAt: new Date()
           });
         }
-        
         await user.save();
-        console.log("User saved with badges after review:", user.badges.length); // Add logging
       }
     }
-    
     res.json({ message: "✅ Review submitted successfully!" });
   } catch (error) {
     res.status(500).json({ message: "❌ Error submitting review!" });
@@ -163,58 +157,27 @@ app.post("/book-picnic", async (req, res) => {
   try {
     const newBooking = new Booking(req.body);
     await newBooking.save();
-    
-    console.log("Booking saved, username:", req.body.username); // Add logging
-    
+
     // Award badges if username is provided
     if (req.body.username) {
       const user = await User.findOne({ username: req.body.username });
       if (user) {
-        console.log("Found user:", user.username); // Add logging
-        
-        // Initialize badges array if it doesn't exist
-        if (!user.badges) user.badges = [];
-        
-        // Initialize stats if they don't exist
-        if (!user.stats) user.stats = {};
-        
-        // Update stats
         user.stats.totalBookings = (user.stats.totalBookings || 0) + 1;
         user.stats.lastActivity = new Date();
-        
-        console.log("Total bookings:", user.stats.totalBookings); // Add logging
-        
-        // Check for first booking badge
+
+        // Check for badges
         if (user.stats.totalBookings === 1 && !user.badges.some(b => b.name === "First Booking")) {
-          console.log("Adding First Booking badge"); // Add logging
-          user.badges.push({
-            name: "First Booking",
-            description: "Made your first booking",
-            icon: "/badges/first-booking.svg",
-            earnedAt: new Date()
-          });
+          user.badges.push({ name: "First Booking", description: "Made your first booking", icon: "/badges/first-booking.svg" });
         }
-        
-        // Check for 5 bookings badge
         if (user.stats.totalBookings >= 5 && !user.badges.some(b => b.name === "Booking Pro")) {
-          console.log("Adding Booking Pro badge"); // Add logging
-          user.badges.push({
-            name: "Booking Pro",
-            description: "Made 5 or more bookings",
-            icon: "/badges/booking-pro.svg",
-            earnedAt: new Date()
-          });
+          user.badges.push({ name: "Booking Pro", description: "Made 5 or more bookings", icon: "/badges/booking-pro.svg" });
         }
-        
         await user.save();
-        console.log("User saved with badges:", user.badges.length); // Add logging
       }
     }
-    
     res.status(201).json({ message: "✅ Picnic booking successful!" });
   } catch (error) {
-    console.error("Error saving booking:", error);
-    res.status(500).json({ message: "❌ Error saving booking", error });
+    res.status(500).json({ message: "❌ Error saving booking", error: error.message });
   }
 });
 
@@ -233,5 +196,5 @@ app.get("/users/:username/badges", async (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
