@@ -1,24 +1,36 @@
-require('dotenv').config(); // This must be the very first line
+require('dotenv').config(); // Load .env locally; ignored on Railway [471]
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
+
 const app = express();
 
-// Use the PORT from environment variables for Render, or 3002 for local development
+// Respect platform PORT; default to 3002 locally [473][476]
 const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// --- Connect to MongoDB using the MONGODB_URI from your .env file ---
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ Successfully connected to MongoDB Atlas"))
+// --- MongoDB connection with explicit env check ---
+const uri = process.env.MONGODB_URI; // Must be set in Railway Variables (raw string, no quotes) [259][449]
+
+if (!uri) {
+  console.error("❌ MONGODB_URI missing at runtime. Set it in Railway Variables as the raw mongodb+srv://... string (no quotes)."); // [441][259]
+  process.exit(1);
+}
+
+mongoose
+  .connect(uri, {
+    serverSelectionTimeoutMS: 5000, // faster feedback during deploys [504][505]
+  })
+  .then(() => console.log("✅ Successfully connected to MongoDB Atlas")) // [504]
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1); // Exit if cannot connect to the database
+    console.error("❌ MongoDB connection error:", err); // [441]
+    process.exit(1);
   });
 
 // --- User Schema and Model ---
@@ -56,13 +68,11 @@ const bookingSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   people: { type: Number, required: true },
   payment: { type: Number, required: true },
-  username: String // Added username to track who made the booking
+  username: String
 });
 const Booking = mongoose.model("Booking", bookingSchema);
 
-// --- User Registration & Login ---
-
-// Register Route
+// --- Auth: Register ---
 app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -84,7 +94,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Login Route
+// --- Auth: Login ---
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -102,9 +112,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// --- Reviews ---
-
-// Submit a new review
+// --- Reviews: Submit ---
 app.post("/submit-review", async (req, res) => {
   try {
     const { locationName, nearestLandmark, reason, username } = req.body;
@@ -115,14 +123,12 @@ app.post("/submit-review", async (req, res) => {
     const newReview = new Review({ locationName, nearestLandmark, reason });
     await newReview.save();
 
-    // Award badges if username is provided
     if (username) {
       const user = await User.findOne({ username });
       if (user) {
         user.stats.totalReviews = (user.stats.totalReviews || 0) + 1;
         user.stats.lastActivity = new Date();
 
-        // Check for first review badge
         if (user.stats.totalReviews === 1 && !user.badges.some(b => b.name === "First Review")) {
           user.badges.push({
             name: "First Review",
@@ -140,7 +146,7 @@ app.post("/submit-review", async (req, res) => {
   }
 });
 
-// Fetch all reviews
+// --- Reviews: Fetch all ---
 app.get("/get-reviews", async (req, res) => {
   try {
     const reviews = await Review.find().sort({ submittedAt: -1 });
@@ -150,22 +156,18 @@ app.get("/get-reviews", async (req, res) => {
   }
 });
 
-// --- Picnic Booking ---
-
-// Handle picnic booking
+// --- Bookings: Create ---
 app.post("/book-picnic", async (req, res) => {
   try {
     const newBooking = new Booking(req.body);
     await newBooking.save();
 
-    // Award badges if username is provided
     if (req.body.username) {
       const user = await User.findOne({ username: req.body.username });
       if (user) {
         user.stats.totalBookings = (user.stats.totalBookings || 0) + 1;
         user.stats.lastActivity = new Date();
 
-        // Check for badges
         if (user.stats.totalBookings === 1 && !user.badges.some(b => b.name === "First Booking")) {
           user.badges.push({ name: "First Booking", description: "Made your first booking", icon: "/badges/first-booking.svg" });
         }
@@ -181,9 +183,7 @@ app.post("/book-picnic", async (req, res) => {
   }
 });
 
-// --- User Badges ---
-
-// Get user badges
+// --- User Badges: Get ---
 app.get("/users/:username/badges", async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
@@ -194,7 +194,7 @@ app.get("/users/:username/badges", async (req, res) => {
   }
 });
 
-// Start Server
+// Start HTTP server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
