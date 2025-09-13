@@ -1,8 +1,14 @@
 # railway.toml
 
 [build]
+# Force the builder to Nixpacks (not Railpack)
 builder = "NIXPACKS"
+# Install backend dependencies from the server directory
 buildCommand = "cd server && npm install"
 
 [deploy]
+# Start the backend from the server directory
 startCommand = "cd server && npm start"
+# Optional healthcheck for root path; adjust if your API exposes a different path
+healthcheckPath = "/"
+healthcheckTimeout = 300
