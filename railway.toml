@@ -2,9 +2,7 @@
 
 [build]
 builder = "NIXPACKS"
-nixpacksConfigPath = "nixpacks.toml"
+buildCommand = "cd server && npm install"
 
 [deploy]
-startCommand = "npm start"
-healthcheckPath = "/"
-healthcheckTimeout = 300
+startCommand = "cd server && npm start"
