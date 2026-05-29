@@ -1,26 +1,44 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
 import Navbar from "@/components/Navbar";
-import Home from "@/components/Home";
-import Spots from "@/components/Spots";
-import Packages from "@/components/Packages";
-import About from "@/components/About";
-import TripPlanner from "@/components/TripPlanner";
-import Events from "@/components/Events";
 import { Toaster } from "@/components/ui/toaster";
-import Profile from "@/components/Profile";
-import Reviews from "@/Reviews";
+
+import Home from "@/pages/Home";
+import Spots from "@/pages/Spots";
+import Packages from "@/pages/Packages";
+import About from "@/pages/About";
+import TripPlanner from "@/pages/TripPlanner";
+import Events from "@/pages/Events";
+import Profile from "@/pages/Profile";
+import FoodDrinks from "@/pages/FoodDrinks"; 
+import Reviews from "@/pages/Reviews";
 import LoginForm from "@/LoginForm";
 import SignupForm from "@/SignupForm";
 import Book from "@/Book";
-import { AuthProvider, useAuth } from "@/AuthContext";
 
-// Protected route component
+import {
+  AuthProvider,
+  useAuth,
+} from "@/AuthContext";
+
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
+
   return children;
 };
 
@@ -30,33 +48,96 @@ function App() {
       <Router>
         <div className="min-h-screen bg-background">
           <Navbar />
+
           <main className="container mx-auto px-4 py-8">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/spots" element={<Spots />} />
-              <Route path="/packages" element={<Packages />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/planner" element={
-                <ProtectedRoute>
-                  <TripPlanner />
-                </ProtectedRoute>
-              } />
-              <Route path="/events" element={<Events />} />
-              <Route path="/book" element={
-                <ProtectedRoute>
-                  <Book />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/login" element={<LoginForm />} />
-              <Route path="/signup" element={<SignupForm />} />
+              <Route
+                path="/"
+                element={<Home />}
+              />
+
+              <Route
+                path="/spots"
+                element={<Spots />}
+              />
+
+              <Route
+                path="/packages"
+                element={<Packages />}
+              />
+
+              <Route
+                path="/reviews"
+                element={<Reviews />}
+              />
+
+              <Route
+                path="/about"
+                element={<About />}
+              />
+
+              <Route
+                path="/events"
+                element={<Events />}
+              />
+
+              {/* Direct Route Map for regular links */}
+              <Route 
+                path="/food-drinks" 
+                element={<FoodDrinks />} 
+              />
+
+              {/* Added: Explicit Route mapping to fix the console fallback error */}
+              <Route 
+                path="/recommendations" 
+                element={<FoodDrinks />} 
+              />
+
+              <Route
+                path="/planner"
+                element={
+                  <ProtectedRoute>
+                    <TripPlanner />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/book"
+                element={
+                  <ProtectedRoute>
+                    <Book />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/login"
+                element={<LoginForm />}
+              />
+
+              <Route
+                path="/signup"
+                element={<SignupForm />}
+              />
+
+              {/* Global Wildcard Catch-all Fallback: Prevents blank screen crashes */}
+              <Route 
+                path="*" 
+                element={<Navigate to="/" replace />} 
+              />
             </Routes>
           </main>
+
           <Toaster />
         </div>
       </Router>
